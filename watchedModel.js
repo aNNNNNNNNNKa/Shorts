@@ -6,4 +6,5 @@ const watchedSchema = new mongoose.Schema({
   watchedAt: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model('Watched', watchedSchema);
+const Watched = mongoose.model('Watched', watchedSchema);
+module.exports = Watched;

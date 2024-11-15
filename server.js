@@ -1,70 +1,42 @@
 const express = require('express');
-const { ApolloServer, gql } = require('apollo-server-express');
 const mongoose = require('mongoose');
-require('dotenv').config();
+const cors = require('cors');
+const dotenv = require('dotenv');
+const Video = require('./models/videoModel');
+
+dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+app.use(cors());
+app.use(express.json());
 
-// MongoDB 연결
 mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('MongoDB connected...'))
-  .catch(err => console.log(err));
+.then(() => console.log('MongoDB connected...'))
+.catch(err => console.log(err));
 
-// 비디오 모델 정의
-const VideoSchema = new mongoose.Schema({
-  video_id: String,
-});
-const Watched = mongoose.model('Watched', VideoSchema);
-const Recommend = mongoose.model('Recommend', VideoSchema);
+app.get('/api/videos', async (req, res) => {
+  try {
+    const videos = await Video.find();
 
-// GraphQL 스키마 정의
-const typeDefs = gql`
-  type Video {
-    video_id: String
-  }
-`;
+    const categories = {};
 
-// GraphQL 리졸버 정의
-const resolvers = {
-  Query: {
-    // 추천 비디오 목록 가져오기
-    recommendedVideos: async () => {
-      try {
-        return await Recommend.find();
-      } catch (error) {
-        throw new Error('Failed to fetch recommended videos');
+    videos.forEach((video) => {
+      if (!categories[video.category]) {
+        categories[video.category] = [];
       }
-    }
-  },
-  Mutation: {
-    // 시청한 비디오 저장
-    saveWatchedVideo: async (_, { video_id }) => {
-      try {
-        const watchedVideo = new Watched({ video_id });
-        await watchedVideo.save();
-        return watchedVideo;
-      } catch (error) {
-        throw new Error('Failed to save watched video');
-      }
-    }
-  }
-};
+      categories[video.category].push(video);
+    });
 
-// Apollo Server 설정
-const server = new ApolloServer({
-  typeDefs,
-  resolvers
+    console.log('Videos by Category:', categories);
+
+    res.status(200).json(categories);
+  } catch (error) {
+    console.error('Error fetching videos:', error);
+    res.status(500).json({ error: 'Failed to fetch videos.' });
+  }
 });
 
-async function startServer() {
-  await server.start();
-  server.applyMiddleware({ app });
-
-  app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-    console.log(`GraphQL playground available at http://localhost:${PORT}${server.graphqlPath}`);
-  });
-}
-
-startServer();
+const PORT = 3000;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});

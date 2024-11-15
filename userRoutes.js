@@ -3,42 +3,33 @@ const User = require('../models/watchedModel');
 const Video = require('../models/videoModel');
 const router = express.Router();
 
-router.post('/:userId/watched', async (req, res) => {
-  try {
-    const userId = req.params.userId;
-    const { video_id } = req.body;
+router.post('/watched', async (req, res) => {
+  const { username, video_id } = req.body;
 
-    const video = await Video.findOne({ video_id });
-    if (!video) {
-      return res.status(404).json({ message: 'Video not found' });
-    }
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    user.watched_videos.push(video._id);
-    await user.save();
-
-    res.status(200).json({ message: 'Video added to watched history' });
-  } catch (err) {
-    res.status(500).json({ message: 'Error saving watched video', error: err });
+  if (!username || !video_id) {
+    return res.status(400).json({ error: 'Username and video_id are required.' });
   }
-});
 
-router.get('/:userId/watched', async (req, res) => {
   try {
-    const userId = req.params.userId;
+    let userWatched = await Watched.findOne({ user: username });
 
-    const user = await User.findById(userId).populate('watched_videos');
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+    if (!userWatched) {
+      userWatched = new Watched({
+        user: username,
+        videos: [video_id],
+      });
+    } else {
+      if (!userWatched.videos.includes(video_id)) {
+        userWatched.videos.push(video_id);
+      }
     }
 
-    res.status(200).json(user.watched_videos);
-  } catch (err) {
-    res.status(500).json({ message: 'Error fetching watched videos', error: err });
+    await userWatched.save();
+
+    res.status(200).json({ message: 'Video added to watched list.' });
+  } catch (error) {
+    console.error('Error saving watched video:', error);
+    res.status(500).json({ error: 'Failed to save watched video.' });
   }
 });
 
