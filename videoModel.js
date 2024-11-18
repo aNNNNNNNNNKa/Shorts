@@ -1,9 +1,10 @@
 const mongoose = require('mongoose');
 
-const videoSchema = new mongoose.Schema({
-  video_id: String,
+const VideoSchema = new mongoose.Schema({
   title: String,
+  video_id: String,
   category: String,
 });
 
-module.exports = mongoose.model('Video', videoSchema, 'recommend');
+const Video = mongoose.model('Video', VideoSchema, 'recommend');
+module.exports = Video;

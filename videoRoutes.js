@@ -1,17 +1,44 @@
 const express = require('express');
 const router = express.Router();
-const Video = require('../models/videoModel'); // 비디오 모델
+const Video = require('../models/videoModel');
 
-router.get('/', async (req, res) => {
+router.get('/random', async (req, res) => {
   try {
-    const videos = await Video.find();
-    const videoData = videos.map(video => ({
-      video_id: video.video_id,
-      title: video.title,
-    }));
-    res.json(videoData);
-  } catch (err) {
-    res.status(500).json({ message: 'Error fetching videos', error: err });
+    console.log("Request received at /api/videos/random");
+
+    const categories = await Video.distinct('category');
+    if (!categories.length) {
+      console.warn("No categories found in the database");
+      return res.status(404).json({ message: "No categories found" });
+    }
+    console.log("Categories found:", categories);
+
+    const randomVideos = [];
+
+    for (const category of categories) {
+      const randomVideo = await Video.aggregate([
+        { $match: { category: category } },
+        { $sample: { size: 1 } },
+      ]);
+
+      if (randomVideo.length > 0) {
+        randomVideos.push(randomVideo[0]);
+      }
+    }
+
+    if (!randomVideos.length) {
+      console.warn("No videos found for any category");
+      return res.status(404).json({ message: "No videos found" });
+    }
+
+    randomVideos.forEach(video => {
+      console.log(`Random Video: Title - ${video.title}, Video ID - ${video.video_id}, Category - ${video.category}`);
+    });
+
+    res.status(200).json(randomVideos);
+  } catch (error) {
+    console.error("Error fetching random videos:", error);
+    res.status(500).json({ message: "Failed to fetch random videos" });
   }
 });
 
