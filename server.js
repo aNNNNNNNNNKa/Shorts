@@ -18,7 +18,7 @@ connectDB();
 
 app.use('/api/videos', videoRoutes);
 app.use('/api', userRoutes);
-app.use('/api/aggregate', aggregateRoutes);
+app.use('/api/', aggregateRoutes);
 app.use('/api/likes', likesRoutes);
 
 const PORT = process.env.PORT || 3000;
