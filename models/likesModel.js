@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const watchedSchema = new mongoose.Schema({
+const likedSchema = new mongoose.Schema({
   user_id: {
     type: String,
     required: true,
@@ -14,15 +14,13 @@ const watchedSchema = new mongoose.Schema({
     required: true,
   }
 }, {
-  timestamps: {
-    type: Date,
-    default: Date.now(),
+  timestamps: true,
   }
-});
+);
 
 // user_id와 video_id가 중복되지 않도록 유니크 인덱스 생성
-watchedSchema.index({ user_id: 1, video_id: 1, category: 1 }, { unique: true });
+likedSchema.index({ user_id: 1, video_id: 1, category: 1 }, { unique: true });
 
-const WatchHistory = mongoose.model('WatchHistory', watchedSchema);
+const LikedHistory = mongoose.model('LikedHistory', likedSchema);
 
-module.exports = WatchHistory;
+module.exports = LikedHistory;

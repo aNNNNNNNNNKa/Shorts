@@ -1,47 +1,39 @@
 const express = require('express');
 const router = express.Router();
 const Video = require('../models/videoModel');
+const WatchHistory = require('../models/watchedModel')
 
-// 랜덤 비디오 요청 (GET)
+// GET /api/videos/random 랜덤 비디오 요청
 router.get('/random', async (req, res) => {
+  const userId = req.query.user_id;
+
   try {
-    console.log("Request received at /api/videos/random");
+    const watchedVideos = await WatchHistory.find({ user_id: userId }).select('video_id');
+    const watchedVideoIds = watchedVideos.map((record) => record.video_id);
 
-    // 모든 카테고리를 가져옴
-    const categories = await Video.distinct('category');
-    if (!categories.length) {
-      console.warn("No categories found in the database");
-      return res.status(404).json({ message: "No categories found" });
-    }
-    console.log("Categories found:", categories);
+    const randomVideos = await Video.aggregate([
+      { $match: { video_id: { $nin: watchedVideoIds } } },
+      { $sample: { size: 10 } },
+    ]);
 
-    const randomVideos = [];
-
-    // 각 카테고리에서 랜덤 비디오 하나를 가져옴
-    for (const category of categories) {
-      const randomVideo = await Video.aggregate([
-        { $match: { category: category } },
-        { $sample: { size: 1 } },
-      ]);
-
-      if (randomVideo.length > 0) {
-        randomVideos.push(randomVideo[0]);
-      }
+    if (randomVideos.length === 0) {
+      console.log('No videos available for recommendation.');
+      return res.status(404).json({ message: 'No videos available' });
     }
 
-    if (!randomVideos.length) {
-      console.warn("No videos found for any category");
-      return res.status(404).json({ message: "No videos found" });
-    }
+    randomVideos.forEach(video => {
+      console.log(`Sent Random Video - Title: ${video.title}, Video ID: ${video.video_id}, User ID: ${userId}`);
+    });
 
-    res.status(200).json(randomVideos);  // 랜덤 비디오 리스트 응답
+    res.status(200).json(randomVideos);
   } catch (error) {
-    console.error("Error fetching random videos:", error);
-    res.status(500).json({ message: "Failed to fetch random videos" });
+    console.error('Error fetching random video:', error);
+    res.status(500).json({ message: 'Error fetching random video', error });
   }
 });
 
-// 카테고리별 비디오 요청 (POST)
+
+// POST /api/videos/new 카테고리별 비디오 요청
 router.post('/new', async (req, res) => {
   const { category } = req.body;
 
@@ -54,7 +46,6 @@ router.post('/new', async (req, res) => {
   }
 
   try {
-    // 카테고리별로 비디오를 찾음
     const videos = await Video.find({ category });
 
     if (videos.length === 0) {
@@ -63,7 +54,7 @@ router.post('/new', async (req, res) => {
     }
 
     console.log(`Found ${videos.length} videos for category: ${category}`);
-    res.status(200).json(videos);  // 카테고리 비디오 리스트 응답
+    res.status(200).json(videos);
   } catch (error) {
     console.error('Error retrieving videos:', error);
     res.status(500).json({ message: 'Error retrieving videos', error });
