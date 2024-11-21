@@ -12,7 +12,7 @@ shorts/<br/>
 ├── routes/                  # 라우터 폴더<br/>
 │   └── videoRoutes.js       # 비디오 관련 라우팅<br/>
 │   └── userRoutes.js        # 유저, 시청기록 관련 라우팅<br/>
-│   └── aggregateRoutes.js   # 유저의 카테고리병 시청 통계 라우팅<br/>
+│   └── aggregateRoutes.js   # 유저의 카테고리별 시청 통계 라우팅<br/>
 │   └── likesRoutes.js       # 유저 선호영상 관련 라우팅<br/>
 └── config/                  # 설정 폴더<br/>
     └── db.js                # MongoDB 연결 설정<br/>
