@@ -22,17 +22,10 @@ router.get('/aggregate/:user_id', async (req, res) => {
 
     console.log("Aggregation stats:", stats);
 
-    const top3 = stats.slice(0, 3);
-    const othersCount = stats.slice(3).reduce((acc, cur) => acc + cur.count, 0);
-
-    const chartData = top3.map(item => ({
+    const chartData = stats.map(item => ({
       category: item._id,
       count: item.count,
     }));
-
-    if (othersCount > 0) {
-      chartData.push({ category: "기타", count: othersCount });
-    }
 
     console.log("Chart Data to be sent:", chartData);
     return res.status(200).json(chartData);
@@ -43,3 +36,4 @@ router.get('/aggregate/:user_id', async (req, res) => {
 });
 
 module.exports = router;
+
